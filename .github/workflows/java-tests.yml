@@ -3,11 +3,13 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - 'src/test/java/saucedemo/**'
+      - 'src/**'       # Теперь следим и за main (Page Objects), и за test (Сами тесты)
+      - 'pom.xml'      # Перезапускаем, если обновились зависимости
   pull_request:
     branches: [ main, master ]
     paths:
-      - 'src/test/java/saucedemo/**'
+      - 'src/**'
+      - 'pom.xml'
 
   workflow_dispatch:
     inputs:
@@ -55,7 +57,6 @@ on:
         default: ''
         type: string
 
-        # Добавляем поле для логина
       username:
         description: 'Имя пользователя (Login)'
         required: true
@@ -69,14 +70,12 @@ on:
           - 'error_user'
           - 'visual_user'
 
-      # Добавляем поле для пароля (тип password скроет вводимые символы звёздочками)
       password:
         description: 'Пароль (Password)'
         required: true
         default: 'secret_sauce'
         type: password
 
-# НОВЫЙ БЛОК: Разрешаем пайплайну делать записи в чек-апы и читать код репозитория
 permissions:
   checks: write
   contents: read
@@ -96,30 +95,24 @@ jobs:
         with:
           java-version: '23'
           distribution: 'oracle'
-          cache: 'maven' # Кэширование спасет от повторной загрузки библиотек при следующих запусках
+          cache: 'maven'
 
       - name: Build Project to download Playwright
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-        # Флаг -B убирает интерактивность, -ntp скрывает прогресс скачивания файлов
         run: mvn test-compile -B -ntp
 
       - name: Install Playwright Browsers
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-        # Добавляем флаг -q (quiet) для Maven, чтобы он не спамил логами скачивания самого CLI инструмента
         run: mvn exec:java -q -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 
-        #Добавил библиотеки для браузеров Playwright в Ubuntu
       - name: Install Playwright Operating System Dependencies
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
 
       - name: Run Tests with Maven
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
-        # -B (Batch mode), -ntp (No Transfer Progress) — лог будет чистым, только результаты тестов
-        # Передаем логин и пароль в Java-код
-        # mvn test
         run: >
           mvn test -B -ntp
           -Dchosen.browser=${{ github.event.inputs.browser || 'chromium' }}
@@ -128,7 +121,6 @@ jobs:
           -Dtest.password=${{ github.event.inputs.password || 'secret_sauce' }}
           ${{ github.event.inputs.test_folder == 'all_packages' && (github.event.inputs.test_filter != '' && format('-Dtest={0}', github.event.inputs.test_filter) || '') || (github.event.inputs.test_filter != '' && format('-Dtest={0}.{1}', github.event.inputs.test_folder, github.event.inputs.test_filter) || format('-Dtest={0}.**', github.event.inputs.test_folder)) }}
           ${{ github.event.inputs.test_tags != '' && github.event.inputs.test_tags != 'all' && format('-Dgroups={0}', github.event.inputs.test_tags) || '' }}
-          
 
       - name: Upload Test Report
         if: always()
@@ -138,10 +130,9 @@ jobs:
           path: target/surefire-reports/
           retention-days: 5
 
-      # НОВЫЙ ШАГ: Создание красивого чек-апа по каждому тесту
       - name: Publish Test Report Summary
         uses: mikepenz/action-junit-report@v5
-        if: always() # Запускать даже если тесты упали
+        if: always()
         with:
           report_paths: '**/target/surefire-reports/TEST-*.xml'
           detailed_summary: true
