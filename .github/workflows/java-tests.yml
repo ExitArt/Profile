@@ -1,0 +1,148 @@
+name: Java Playwright UI Tests (Saucedemo)
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src/test/java/saucedemo/**'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/test/java/saucedemo/**'
+
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Выберите браузер'
+        required: true
+        default: 'chromium'
+        type: choice
+        options:
+          - chromium
+          - firefox
+
+      headless:
+        description: 'Запустить в скрытом режиме (Headless)?'
+        required: true
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+      test_folder:
+        description: 'Choose the folder'
+        required: false
+        default: 'saucedemo'
+        type: choice
+        options:
+          - saucedemo
+          - soloTests
+
+      test_filter:
+        description: 'Какие тесты запустить? (Пусто = ВСЕ)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'one'
+          - 'smoke'
+          - 'regress'
+
+      test_tags:
+        description: 'Run by Tag (Пусто = ВСЕ. Примеры: LoginTest, *Smoke*, LoginTest#coreTest)'
+        required: false
+        default: ''
+        type: string
+
+        # Добавляем поле для логина
+      username:
+        description: 'Имя пользователя (Login)'
+        required: true
+        default: 'standard_user'
+        type: choice
+        options:
+          - 'standard_user'
+          - 'locked_out_user'
+          - 'problem_user'
+          - 'performance_glitch_user'
+          - 'error_user'
+          - 'visual_user'
+
+      # Добавляем поле для пароля (тип password скроет вводимые символы звёздочками)
+      password:
+        description: 'Пароль (Password)'
+        required: true
+        default: 'secret_sauce'
+        type: password
+
+# НОВЫЙ БЛОК: Разрешаем пайплайну делать записи в чек-апы и читать код репозитория
+permissions:
+  checks: write
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 23
+        uses: actions/setup-java@v4
+        with:
+          java-version: '23'
+          distribution: 'oracle'
+          cache: 'maven' # Кэширование спасет от повторной загрузки библиотек при следующих запусках
+
+      - name: Build Project to download Playwright
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+        # Флаг -B убирает интерактивность, -ntp скрывает прогресс скачивания файлов
+        run: mvn test-compile -B -ntp
+
+      - name: Install Playwright Browsers
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+        # Добавляем флаг -q (quiet) для Maven, чтобы он не спамил логами скачивания самого CLI инструмента
+        run: mvn exec:java -q -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
+
+        #Добавил библиотеки для браузеров Playwright в Ubuntu
+      - name: Install Playwright Operating System Dependencies
+        run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
+
+      - name: Run Tests with Maven
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+        # -B (Batch mode), -ntp (No Transfer Progress) — лог будет чистым, только результаты тестов
+        # Передаем логин и пароль в Java-код
+        # mvn test
+        run: >
+          mvn test -B -ntp
+          -Dchosen.browser=${{ github.event.inputs.browser || 'chromium' }}
+          -Dchosen.headless=${{ github.event.inputs.headless || 'true' }}
+          -Dtest.username=${{ github.event.inputs.username || 'standard_user' }}
+          -Dtest.password=${{ github.event.inputs.password || 'secret_sauce' }}
+          ${{ github.event.inputs.test_folder == 'all_packages' && (github.event.inputs.test_filter != '' && format('-Dtest={0}', github.event.inputs.test_filter) || '') || (github.event.inputs.test_filter != '' && format('-Dtest={0}.{1}', github.event.inputs.test_folder, github.event.inputs.test_filter) || format('-Dtest={0}.**', github.event.inputs.test_folder)) }}
+          ${{ github.event.inputs.test_tags != '' && github.event.inputs.test_tags != 'all' && format('-Dgroups={0}', github.event.inputs.test_tags) || '' }}
+          
+
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: maven-test-reports
+          path: target/surefire-reports/
+          retention-days: 5
+
+      # НОВЫЙ ШАГ: Создание красивого чек-апа по каждому тесту
+      - name: Publish Test Report Summary
+        uses: mikepenz/action-junit-report@v5
+        if: always() # Запускать даже если тесты упали
+        with:
+          report_paths: '**/target/surefire-reports/TEST-*.xml'
+          detailed_summary: true
+          include_passed: true
