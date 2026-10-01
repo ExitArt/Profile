@@ -13,7 +13,7 @@
         <maven.compiler.target>23</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- ИСПРАВЛЕНО: Версии Allure скорректированы для стабильной работы на Java 23 -->
+        <!-- Версии Allure скорректированы для стабильной работы на Java 23 -->
         <allure.version>2.29.0</allure.version>
         <allure-maven.version>2.12.0</allure-maven.version>
         <aspectj.version>1.9.22.1</aspectj.version>
@@ -64,10 +64,11 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Playwright для автоматизации -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
-            <version>1.61.0</version>
+            <version>1.49.0</version>
         </dependency>
 
         <!-- Обновленный Selenide -->
@@ -81,38 +82,50 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>RELEASE</version>
+            <version>26.0.1</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Плагин компиляции под Java 23 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
             <!-- Плагин Surefire для запуска тестов -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
                 <configuration>
+                    <argLine>
+                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
+                    </argLine>
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
                 </configuration>
                 <dependencies>
-                    <!-- Явный лаунчер платформы, собранный под Java 23 совместимость -->
+                    <!-- Явный лаунчер платформы для совместимости с Java 23 -->
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-launcher</artifactId>
                         <version>1.11.4</version>
                     </dependency>
-                    <!-- Ваша закомментированная зависимость сохранена ниже: -->
-                    <!--
+                    <!-- Раскомментировано: необходим для корректной работы Allure перехватчиков -->
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
                         <version>${aspectj.version}</version>
                     </dependency>
-                    -->
                 </dependencies>
             </plugin>
 
@@ -128,5 +141,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
