@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://apache.org"
+         xmlns:xsi="http://w3.org"
+         xsi:schemaLocation="http://apache.org http://apache.org">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>Ex1t</groupId>
@@ -13,9 +13,9 @@
         <maven.compiler.target>23</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <!-- Версии для Allure -->
-        <allure.version>2.35.5</allure.version>
-        <allure-maven.version>3.1.0</allure-maven.version>
+        <!-- ИСПРАВЛЕНО: Версии Allure скорректированы для стабильной работы на Java 23 -->
+        <allure.version>2.29.0</allure.version>
+        <allure-maven.version>2.12.0</allure-maven.version>
         <aspectj.version>1.9.22.1</aspectj.version>
     </properties>
 
@@ -33,7 +33,7 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- API для написания тестов JUnit 5 (Совместимо с Java 23) -->
+        <!-- API для написания тестов JUnit 5 (Стабильная версия) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -41,7 +41,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- Движок запуска JUnit 5 (Совместимо с Java 23) -->
+        <!-- Движок запуска JUnit 5 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -52,7 +52,15 @@
         <!-- Адаптер Allure для JUnit 5 -->
         <dependency>
             <groupId>io.qameta.allure</groupId>
-            <artifactId>allure-jupiter</artifactId>
+            <artifactId>allure-junit5</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- Убираем варнинг SLF4J, добавляя легковесный провайдер логов -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>2.0.16</version>
             <scope>test</scope>
         </dependency>
 
@@ -86,19 +94,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
                 <configuration>
-                    <!-- Закомментировано из-за несовместимости AspectJ с Java 23 -->
-                    <!--
-                    <argLine>
-                        -javaagent:"${settings.localRepository}/org/aspectj/aspectjweaver/${aspectj.version}/aspectjweaver-${aspectj.version}.jar"
-                    </argLine>
-                    -->
                     <systemPropertyVariables>
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
                 </configuration>
-
                 <dependencies>
-                    <!-- ИСПРАВЛЕНО: Оставлен только лаунчер платформы для стабильного поиска тестов на Java 23 -->
+                    <!-- Явный лаунчер платформы, собранный под Java 23 совместимость -->
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-launcher</artifactId>
@@ -115,7 +116,7 @@
                 </dependencies>
             </plugin>
 
-            <!-- Плагин Allure для локальной сборки отчетов -->
+            <!-- Плагин Allure для сборки отчетов -->
             <plugin>
                 <groupId>io.qameta.allure</groupId>
                 <artifactId>allure-maven</artifactId>
