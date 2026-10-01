@@ -1,4 +1,4 @@
-package saucedemo;
+package tests;
 
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,4 +1,4 @@
-package saucedemo;
+package tests;
 
 import org.junit.jupiter.api.Test;
 import saucedemo.pages.ProductsPage; // Импортируем наш Page Object
