@@ -156,10 +156,10 @@ jobs:
           ref: gh-pages
           path: target/allure-results/history # Качаем историю строго туда, где её ждет Maven
 
-      # 2. НАПРАВУЮ через Maven компилируем отчет (без докеров и сторонних экшенов)
+      # Теперь Maven соберет отчет, даже если тесты упали, и не заблокирует билд
       - name: Generate Allure Report via Maven
         if: always()
-        run: mvn allure:report
+        run: mvn allure:report -Dallure.install.dir=${{ github.workspace }}/.allure || true
 
       # 3. Публикуем сгенерированный HTML-отчет (он лежит в target/site/allure-maven-plugin)
       - name: Deploy Allure Report to GitHub Pages
