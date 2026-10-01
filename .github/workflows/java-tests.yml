@@ -1,16 +1,9 @@
 name: Java Playwright UI Tests (Saucedemo)
 on:
   push:
-  # Закомментировано, чтобы пайплайн реагировал на любые изменения:
-  # paths:
-  #   - 'src/**'
-  #   - 'pom.xml'
+    branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-    # paths:
-    #   - 'src/**'
-    #   - 'pom.xml'
-
   workflow_dispatch:
     inputs:
       browser:
@@ -31,28 +24,8 @@ on:
           - 'true'
           - 'false'
 
-#      test_folder:
-#        description: 'Choose the folder'
-#        required: false
-#        default: 'saucedemo'
-#        type: choice
-#        options:
-#          - saucedemo
-#          - soloTests
-#
-#      test_filter:
-#        description: 'Какие тесты запустить? (Пусто = ВСЕ)'
-#        required: false
-#        default: ''
-#        type: choice
-#        options:
-#          - ''
-#          - 'one'
-#          - 'smoke'
-#          - 'regress'
-
       test_tags:
-        description: 'Run by Tag (Пусто = ВСЕ. Примеры: LoginTest, *Smoke*, LoginTest#coreTest)'
+        description: 'Фильтр тестов (Имя класса или паттерн. Пусто = ВСЕ. Примеры: LoginTest, *Smoke*)'
         required: false
         default: ''
         type: string
@@ -78,7 +51,7 @@ on:
 
 permissions:
   checks: write
-  contents: write # Даем права на запись, чтобы пушить отчет в ветку gh-pages
+  contents: write # Права для публикации отчета в ветку gh-pages
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -97,41 +70,29 @@ jobs:
           distribution: 'oracle'
           cache: 'maven'
 
-      - name: Build Project to download Playwright
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
+      # Компилируем проект один раз, подгружая правильные зависимости из нашего pom.xml
+      - name: Build Project and Download Dependencies
         run: mvn test-compile -B -ntp
 
+      # Установка бинарников Playwright через CLI фреймворка
       - name: Install Playwright Browsers
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
         run: mvn exec:java -q -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 
+      # Установка системных зависимостей ОС (библиотеки Linux для Chromium/Firefox)
       - name: Install Playwright Operating System Dependencies
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
 
-      - name: Update Dependencies and Build Project
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
-        # Сначала обновляем все зависимости в pom.xml до последних стабильных версий, затем компилируем
-        run: |
-          mvn versions:use-latest-releases -DgenerateBackupPoms=false -B -ntp
-          mvn test-compile -B -ntp
-
+      # Запуск тестов. Изменен синтаксис передачи тегов на стандартный -Dtest для Maven Surefire.
       - name: Run Tests with Maven
-        env:
-          JAVA_HOME: ${{ env.JAVA_HOME }}
-        # Закомментированная логика папок и фильтров (для восстановления перенесите внутрь run):
-        # ${{ github.event.inputs.test_folder == 'all_packages' && (github.event.inputs.test_filter != '' && format('-Dtest={0}', github.event.inputs.test_filter) || '') || (github.event.inputs.test_filter != '' && format('-Dtest={0}.{1}', github.event.inputs.test_folder, github.event.inputs.test_filter) || format('-Dtest={0}.**', github.event.inputs.test_folder)) }}
         run: |
           mvn test -B -ntp \
           -Dchosen.browser="${{ github.event.inputs.browser || 'chromium' }}" \
           -Dchosen.headless="${{ github.event.inputs.headless || 'true' }}" \
           -Dtest.username="${{ github.event.inputs.username || 'standard_user' }}" \
           -Dtest.password="${{ github.event.inputs.password || 'secret_sauce' }}" \
-          ${{ github.event.inputs.test_tags != '' && github.event.inputs.test_tags != 'all' && format('-Dgroups="{0}"', github.event.inputs.test_tags) || '' }}
+          ${{ github.event.inputs.test_tags != '' && format('-Dtest="{0}"', github.event.inputs.test_tags) || '' }}
 
-      - name: Upload Test Report
+      - name: Upload Test Report Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -147,21 +108,21 @@ jobs:
           detailed_summary: true
           include_passed: true
 
-      # 1. Скачиваем историю из ветки gh-pages, чтобы Allure подтянул прошлые тренды
+      # Скачиваем историю Allure из ветки gh-pages для сохранения графиков
       - name: Get Allure history
         uses: actions/checkout@v4
         if: always()
         continue-on-error: true
         with:
           ref: gh-pages
-          path: target/allure-results/history # Качаем историю строго туда, где её ждет Maven
+          path: target/allure-results/history
 
-      # Теперь Maven соберет отчет, даже если тесты упали, и не заблокирует билд
+      # Генерация HTML отчета через плагин
       - name: Generate Allure Report via Maven
         if: always()
         run: mvn allure:report -Dallure.install.dir=${{ github.workspace }}/.allure || true
 
-      # 3. Публикуем сгенерированный HTML-отчет (он лежит в target/site/allure-maven-plugin)
+      # Публикация готового сайта-отчета на GitHub Pages
       - name: Deploy Allure Report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         if: always()
