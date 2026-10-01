@@ -97,17 +97,12 @@
                     </systemPropertyVariables>
                 </configuration>
 
-                <!-- ИСПРАВЛЕНО: Добавлен современный лаунчер платформы для стабильного поиска тестов на Java 23 -->
                 <dependencies>
+                    <!-- ИСПРАВЛЕНО: Оставлен только лаунчер платформы для стабильного поиска тестов на Java 23 -->
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-launcher</artifactId>
                         <version>1.11.4</version>
-                    </dependency>
-                    <dependency>
-                        <groupId>org.apache.maven.surefire</groupId>
-                        <artifactId>surefire-junitplatform</artifactId>
-                        <version>3.5.2</version>
                     </dependency>
                     <!-- Ваша закомментированная зависимость сохранена ниже: -->
                     <!--
