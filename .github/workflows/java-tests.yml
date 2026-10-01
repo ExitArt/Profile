@@ -1,14 +1,15 @@
 name: Java Playwright UI Tests (Saucedemo)
 on:
   push:
-    paths:
-      - 'src/**'       # Следим и за main (Page Objects), и за test (Сами тесты)
-      - 'pom.xml'      # Перезапускаем, если обновились зависимости
+  # Закомментировано, чтобы пайплайн реагировал на любые изменения:
+  # paths:
+  #   - 'src/**'
+  #   - 'pom.xml'
   pull_request:
     branches: [ main, master ]
-    paths:
-      - 'src/**'
-      - 'pom.xml'
+    # paths:
+    #   - 'src/**'
+    #   - 'pom.xml'
 
   workflow_dispatch:
     inputs:
