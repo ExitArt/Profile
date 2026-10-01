@@ -1,4 +1,4 @@
-name: Java Playwright UI Tests (Saucedemo)
+name: Java Playwright UI Tests (SauceDemo)
 on:
   push:
   # Пайплайн запускается при пуше в вообще любую ветку
