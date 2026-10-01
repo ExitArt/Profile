@@ -139,39 +139,25 @@ jobs:
           detailed_summary: true
           include_passed: true
 
+      # 1. Скачиваем историю из ветки gh-pages, чтобы Allure подтянул прошлые тренды
       - name: Get Allure history
         uses: actions/checkout@v4
         if: always()
         continue-on-error: true
         with:
           ref: gh-pages
-          path: gh-pages-dir
-      # Качаем в отдельную временную папку
+          path: target/allure-results/history # Качаем историю строго туда, где её ждет Maven
 
-      # Переносим историю в правильное место, не ломая билд, если ветки нет
-      - name: Setup Allure history structure
+      # 2. НАПРАВУЮ через Maven компилируем отчет (без докеров и сторонних экшенов)
+      - name: Generate Allure Report via Maven
         if: always()
-        run: |
-          mkdir -p allure-history
-          if [ -d "gh-pages-dir" ]; then
-            cp -r gh-pages-dir/. allure-history/ || true
-          fi
+        run: mvn allure:report
 
-      # Генерация Allure отчета (используем стабильный маркетплейс экшен)
-      - name: Generate Allure Report
-        uses: andrcunha/generate-allure-report@v1.12.0
-        if: always()
-        with:
-          allure-results: target/allure-results
-          allure-report: allure-report
-          allure-history: allure-history
-          max-reports: 20
-
-      # Публикуем финальную папку с историей в ветку gh-pages
+      # 3. Публикуем сгенерированный HTML-отчет (он лежит в target/site/allure-maven-plugin)
       - name: Deploy Allure Report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: allure-history
+          publish_dir: target/site/allure-maven-plugin
