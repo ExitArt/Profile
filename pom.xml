@@ -96,16 +96,28 @@
                         <allure.results.directory>${project.build.directory}/allure-results</allure.results.directory>
                     </systemPropertyVariables>
                 </configuration>
-                <!-- Закомментирована зависимость, так как агент не используется -->
-                <!--
+
+                <!-- ИСПРАВЛЕНО: Добавлен современный лаунчер платформы для стабильного поиска тестов на Java 23 -->
                 <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-launcher</artifactId>
+                        <version>1.11.4</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.apache.maven.surefire</groupId>
+                        <artifactId>surefire-junitplatform</artifactId>
+                        <version>3.5.2</version>
+                    </dependency>
+                    <!-- Ваша закомментированная зависимость сохранена ниже: -->
+                    <!--
                     <dependency>
                         <groupId>org.aspectj</groupId>
                         <artifactId>aspectjweaver</artifactId>
                         <version>${aspectj.version}</version>
                     </dependency>
+                    -->
                 </dependencies>
-                -->
             </plugin>
 
             <!-- Плагин Allure для локальной сборки отчетов -->
