@@ -123,13 +123,13 @@ jobs:
           JAVA_HOME: ${{ env.JAVA_HOME }}
         # Закомментированная логика папок и фильтров (для восстановления перенесите внутрь run):
         # ${{ github.event.inputs.test_folder == 'all_packages' && (github.event.inputs.test_filter != '' && format('-Dtest={0}', github.event.inputs.test_filter) || '') || (github.event.inputs.test_filter != '' && format('-Dtest={0}.{1}', github.event.inputs.test_folder, github.event.inputs.test_filter) || format('-Dtest={0}.**', github.event.inputs.test_folder)) }}
-        run: >
-          mvn test -B -ntp
-          -Dchosen.browser=${{ github.event.inputs.browser || 'chromium' }}
-          -Dchosen.headless=${{ github.event.inputs.headless || 'true' }}
-          -Dtest.username=${{ github.event.inputs.username || 'standard_user' }}
-          -Dtest.password=${{ github.event.inputs.password || 'secret_sauce' }}
-          ${{ github.event.inputs.test_tags != '' && github.event.inputs.test_tags != 'all' && format('-Dgroups={0}', github.event.inputs.test_tags) || '' }}
+        run: |
+          mvn test -B -ntp \
+          -Dchosen.browser="${{ github.event.inputs.browser || 'chromium' }}" \
+          -Dchosen.headless="${{ github.event.inputs.headless || 'true' }}" \
+          -Dtest.username="${{ github.event.inputs.username || 'standard_user' }}" \
+          -Dtest.password="${{ github.event.inputs.password || 'secret_sauce' }}" \
+          ${{ github.event.inputs.test_tags != '' && github.event.inputs.test_tags != 'all' && format('-Dgroups="{0}"', github.event.inputs.test_tags) || '' }}
 
       - name: Upload Test Report
         if: always()
