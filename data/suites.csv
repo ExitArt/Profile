@@ -1,0 +1,5 @@
+"Status","Start Time","Stop Time","Duration in ms","Parent Suite","Suite","Sub Suite","Test Class","Test Method","Name","Description"
+"passed","Thu Oct 01 12:45:50 UTC 2026","Thu Oct 01 12:45:54 UTC 2026","3571","","saucedemo.CheckUniqProductsTest","","saucedemo.CheckUniqProductsTest","checkUniq","checkUniq()",""
+"passed","Thu Oct 01 12:45:50 UTC 2026","Thu Oct 01 12:45:54 UTC 2026","3889","","saucedemo.AddToCartTest","","saucedemo.AddToCartTest","testSuccessAddToCart","testSuccessAddToCart()",""
+"failed","Thu Oct 01 12:45:50 UTC 2026","Thu Oct 01 12:45:59 UTC 2026","8350","","saucedemo.InventoryTest","","saucedemo.InventoryTest","shouldHaveItemsInStore","shouldHaveItemsInStore()",""
+"passed","Thu Oct 01 12:45:50 UTC 2026","Thu Oct 01 12:45:54 UTC 2026","3573","","saucedemo.LoginUserTest","","saucedemo.LoginUserTest","AllUsersAuthorization","AllUsersAuthorization()",""
