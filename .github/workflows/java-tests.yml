@@ -1,9 +1,8 @@
 name: Java Playwright UI Tests (Saucedemo)
 on:
   push:
-    branches: [ main, master ]
     paths:
-      - 'src/**'       # Теперь следим и за main (Page Objects), и за test (Сами тесты)
+      - 'src/**'       # Следим и за main (Page Objects), и за test (Сами тесты)
       - 'pom.xml'      # Перезапускаем, если обновились зависимости
   pull_request:
     branches: [ main, master ]
@@ -78,7 +77,7 @@ on:
 
 permissions:
   checks: write
-  contents: read
+  contents: write # Даем права на запись, чтобы пушить отчет в ветку gh-pages
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -138,3 +137,29 @@ jobs:
           report_paths: '**/target/surefire-reports/TEST-*.xml'
           detailed_summary: true
           include_passed: true
+
+      - name: Get Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Generate Allure Report
+        uses: simple-elf/allure-report-action@v1.11
+        if: always()
+        id: allure-report
+        with:
+          allure_results: target/allure-results
+          gh_pages: gh-pages
+          allure_report: allure-report
+          allure_history: allure-history
+
+      - name: Deploy Allure Report to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: allure-history
