@@ -1,10 +1,11 @@
 name: Java Playwright UI Tests (Saucedemo)
 on:
   push:
-    branches: [ main, master ]
+  # Пайплайн запускается при пуше в вообще любую ветку
   pull_request:
-    branches: [ main, master ]
+  # Пайплайн проверяет пулл-реквесты из любых веток
   workflow_dispatch:
+    # Кнопка ручного запуска в интерфейсе GitHub доступна всегда
     inputs:
       browser:
         description: 'Выберите браузер'
@@ -51,7 +52,7 @@ on:
 
 permissions:
   checks: write
-  contents: write # Права для публикации отчета в ветку gh-pages
+  contents: write # Нужен доступ для записи отчетов на gh-pages
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -70,19 +71,15 @@ jobs:
           distribution: 'oracle'
           cache: 'maven'
 
-      # Компилируем проект один раз, подгружая правильные зависимости из нашего pom.xml
       - name: Build Project and Download Dependencies
         run: mvn test-compile -B -ntp
 
-      # Установка бинарников Playwright через CLI фреймворка
       - name: Install Playwright Browsers
         run: mvn exec:java -q -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
 
-      # Установка системных зависимостей ОС (библиотеки Linux для Chromium/Firefox)
       - name: Install Playwright Operating System Dependencies
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
 
-      # Запуск тестов. Изменен синтаксис передачи тегов на стандартный -Dtest для Maven Surefire.
       - name: Run Tests with Maven
         run: |
           mvn test -B -ntp \
@@ -92,6 +89,7 @@ jobs:
           -Dtest.password="${{ github.event.inputs.password || 'secret_sauce' }}" \
           ${{ github.event.inputs.test_tags != '' && format('-Dtest="{0}"', github.event.inputs.test_tags) || '' }}
 
+      # Сохраняем логи и сырые результаты тестов в артефакты GitHub ВСЕГДА
       - name: Upload Test Report Artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -108,24 +106,26 @@ jobs:
           detailed_summary: true
           include_passed: true
 
-      # Скачиваем историю Allure из ветки gh-pages для сохранения графиков
+      # --- НИЖЕ ЛОГИКА ОГРАНИЧЕНИЯ ДЛЯ ВЕТКИ MAIN ---
+
+      # Скачиваем историю прошлых запусков ТОЛЬКО для main branch
       - name: Get Allure history
         uses: actions/checkout@v4
-        if: always()
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         continue-on-error: true
         with:
           ref: gh-pages
           path: target/allure-results/history
 
-      # Генерация HTML отчета через плагин
+      # Собираем Allure отчет в готовый сайт ТОЛЬКО для main branch
       - name: Generate Allure Report via Maven
-        if: always()
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         run: mvn allure:report -Dallure.install.dir=${{ github.workspace }}/.allure || true
 
-      # Публикация готового сайта-отчета на GitHub Pages
+      # Публикуем сайт на GitHub Pages ТОЛЬКО для main branch
       - name: Deploy Allure Report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
-        if: always()
+        if: always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
