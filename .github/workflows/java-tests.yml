@@ -144,18 +144,29 @@ jobs:
         continue-on-error: true
         with:
           ref: gh-pages
-          path: gh-pages
+          path: gh-pages-dir
+      # Качаем в отдельную временную папку
 
-      - name: Generate Allure Report
-        uses: simple-elf/allure-report-action@v1.11
+      # Переносим историю в правильное место, не ломая билд, если ветки нет
+      - name: Setup Allure history structure
         if: always()
-        id: allure-report
+        run: |
+          mkdir -p allure-history
+          if [ -d "gh-pages-dir" ]; then
+            cp -r gh-pages-dir/. allure-history/ || true
+          fi
+
+      # ИСПРАВЛЕНО: Используем официальный стабильный экшен без Докера
+      - name: Generate Allure Report
+        uses: allure-framework/allure-github-actions@v2.15.1
+        if: always()
         with:
           allure_results: target/allure-results
-          gh_pages: gh-pages
           allure_report: allure-report
           allure_history: allure-history
+          keep_histories: 20
 
+      # Публикуем финальную папку с историей в ветку gh-pages
       - name: Deploy Allure Report to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         if: always()
