@@ -157,15 +157,15 @@ jobs:
             cp -r gh-pages-dir/. allure-history/ || true
           fi
 
-      # ИСПРАВЛЕНО: Используем официальный стабильный экшен без Докера
+      # Генерация Allure отчета (используем стабильный маркетплейс экшен)
       - name: Generate Allure Report
-        uses: allure-framework/allure-github-actions@v2.15.1
+        uses: andrcunha/generate-allure-report@v1.12.0
         if: always()
         with:
-          allure_results: target/allure-results
-          allure_report: allure-report
-          allure_history: allure-history
-          keep_histories: 20
+          allure-results: target/allure-results
+          allure-report: allure-report
+          allure-history: allure-history
+          max-reports: 20
 
       # Публикуем финальную папку с историей в ветку gh-pages
       - name: Deploy Allure Report to GitHub Pages
