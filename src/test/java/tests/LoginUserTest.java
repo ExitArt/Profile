@@ -1,6 +1,7 @@
-package saucedemo;
+package tests;
 
 import org.junit.jupiter.api.Test;
+import saucedemo.BaseTest;
 import saucedemo.pages.ProductsPage; // Импортируем нашу страницу
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 

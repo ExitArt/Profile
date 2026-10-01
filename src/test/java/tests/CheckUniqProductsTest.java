@@ -1,6 +1,7 @@
-package saucedemo;
+package tests;
 
 import org.junit.jupiter.api.Test;
+import saucedemo.BaseTest;
 import saucedemo.pages.ProductsPage; // Импортируем наш Page Object
 import java.util.HashSet;
 import java.util.List;
