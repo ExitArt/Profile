@@ -110,6 +110,14 @@ jobs:
       - name: Install Playwright Operating System Dependencies
         run: mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install-deps"
 
+      - name: Update Dependencies and Build Project
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+        # Сначала обновляем все зависимости в pom.xml до последних стабильных версий, затем компилируем
+        run: |
+          mvn versions:use-latest-releases -DgenerateBackupPoms=false -B -ntp
+          mvn test-compile -B -ntp
+
       - name: Run Tests with Maven
         env:
           JAVA_HOME: ${{ env.JAVA_HOME }}
