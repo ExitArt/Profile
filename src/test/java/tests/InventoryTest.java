@@ -1,7 +1,6 @@
 package tests;
 
 import org.junit.jupiter.api.Test;
-import saucedemo.BaseTest;
 import saucedemo.pages.ProductsPage; // Импортируем Page Object
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
@@ -9,15 +8,14 @@ public class InventoryTest extends BaseTest {
 
     @Test
     public void shouldHaveItemsInStore() {
-        // Инициализируем страницу продуктов
         ProductsPage productsPage = new ProductsPage(page);
 
-        // Получаем количество товаров через метод класса страницы
-        int itemsCount = productsPage.getInventoryItemsCount();
+        // Мы заранее знаем требования бизнеса: на SauceDemo ВСЕГДА должно быть 6 товаров
+        int expectedItemsCount = 6;
 
-        // Используем умный ассерт Playwright без хардкода локатора
-        assertThat(productsPage.getInventoryItemsLocator()).hasCount(itemsCount);
+        // Playwright будет ждать до 5 секунд, пока страница догрузится и карточек станет ровно 6
+        assertThat(productsPage.getInventoryItemsLocator()).hasCount(expectedItemsCount);
 
-        System.out.println("Products at list: " + itemsCount);
+        System.out.println("Тест успешно проверил наличие " + expectedItemsCount + " товаров.");
     }
 }
