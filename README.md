@@ -1,4 +1,3 @@
-# SuaceDemo
 # Привет! Меня зовут Артём 👋
 ### QA Engineer (Java)
 
